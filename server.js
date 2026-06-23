@@ -94,6 +94,49 @@ app.post('/queue', async (req, res) => {
   }
 });
 
+// Chanson en cours
+app.get('/now-playing', async (req, res) => {
+  if (!accessToken) return res.status(401).json({ error: 'Non connecté' });
+  try {
+    const response = await axios.get('https://api.spotify.com/v1/me/player/currently-playing', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    if (!response.data || !response.data.item) return res.json(null);
+    const t = response.data.item;
+    res.json({
+      name: t.name,
+      artist: t.artists[0].name,
+      album: t.album.name,
+      image: t.album.images[1]?.url,
+      progress: response.data.progress_ms,
+      duration: t.duration_ms,
+      is_playing: response.data.is_playing
+    });
+  } catch (e) {
+    await refreshAccessToken();
+    res.status(500).json({ error: 'Erreur' });
+  }
+});
+
+// File d'attente
+app.get('/queue-list', async (req, res) => {
+  if (!accessToken) return res.status(401).json({ error: 'Non connecté' });
+  try {
+    const response = await axios.get('https://api.spotify.com/v1/me/player/queue', {
+      headers: { Authorization: `Bearer ${accessToken}` }
+    });
+    const tracks = response.data.queue.slice(0, 20).map(t => ({
+      name: t.name,
+      artist: t.artists[0].name,
+      image: t.album.images[2]?.url
+    }));
+    res.json(tracks);
+  } catch (e) {
+    await refreshAccessToken();
+    res.status(500).json({ error: 'Erreur' });
+  }
+});
+
 // Page principale (invités)
 app.get('/', (req, res) => {
   if (!accessToken) {
