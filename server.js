@@ -37,7 +37,8 @@ app.get('/callback', async (req, res) => {
     refreshToken = response.data.refresh_token;
     res.redirect('/');
   } catch (e) {
-    res.send('Erreur lors de la connexion Spotify.');
+    console.error('Erreur callback:', e.response?.data || e.message);
+    res.send('Erreur: ' + JSON.stringify(e.response?.data || e.message));
   }
 });
 
