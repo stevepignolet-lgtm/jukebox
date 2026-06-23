@@ -32,9 +32,13 @@
   <div class="toast" id="toast">✅ Ajouté à la file !</div>
 
   <script>
-    document.getElementById('query').addEventListener('keydown', e => {
-      if (e.key === 'Enter') search();
-    });
+  let debounceTimer;
+  document.getElementById('query').addEventListener('input', e => {
+    clearTimeout(debounceTimer);
+    const q = e.target.value;
+    if (q.length < 2) return;
+    debounceTimer = setTimeout(() => search(), 400);
+  });
 
     async function search() {
       const q = document.getElementById('query').value;
