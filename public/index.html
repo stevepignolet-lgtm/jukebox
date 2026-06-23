@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>🎵 Jukebox</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: sans-serif; background: #121212; color: white; padding: 20px; }
+    h1 { text-align: center; color: #1DB954; margin-bottom: 20px; }
+    .search-bar { display: flex; gap: 10px; margin-bottom: 20px; }
+    input { flex: 1; padding: 12px; border-radius: 8px; border: none; font-size: 16px; background: #282828; color: white; }
+    button { padding: 12px 20px; background: #1DB954; color: white; border: none; border-radius: 8px; font-size: 16px; cursor: pointer; }
+    button:hover { background: #1aa34a; }
+    .track { display: flex; align-items: center; gap: 12px; background: #282828; border-radius: 10px; padding: 10px; margin-bottom: 10px; }
+    .track img { width: 56px; height: 56px; border-radius: 6px; }
+    .track-info { flex: 1; }
+    .track-name { font-weight: bold; font-size: 15px; }
+    .track-artist { color: #aaa; font-size: 13px; }
+    .add-btn { padding: 8px 14px; background: #1DB954; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; }
+    .add-btn:disabled { background: #555; cursor: default; }
+    .toast { position: fixed; bottom: 30px; left: 50%; transform: translateX(-50%); background: #1DB954; color: white; padding: 12px 24px; border-radius: 8px; display: none; font-size: 15px; }
+  </style>
+</head>
+<body>
+  <h1>🎵 Jukebox</h1>
+  <div class="search-bar">
+    <input type="text" id="query" placeholder="Rechercher une musique..." />
+    <button onclick="search()">🔍</button>
+  </div>
+  <div id="results"></div>
+  <div class="toast" id="toast">✅ Ajouté à la file !</div>
+
+  <script>
+    document.getElementById('query').addEventListener('keydown', e => {
+      if (e.key === 'Enter') search();
+    });
+
+    async function search() {
+      const q = document.getElementById('query').value;
+      if (!q) return;
+      const res = await fetch(`/search?q=${encodeURIComponent(q)}`);
+      const tracks = await res.json();
+      const div = document.getElementById('results');
+      div.innerHTML = tracks.map(t => `
+        <div class="track">
+          <img src="${t.image}" alt="">
+          <div class="track-info">
+            <div class="track-name">${t.name}</div>
+            <div class="track-artist">${t.artist} — ${t.album}</div>
+          </div>
+          <button class="add-btn" onclick="addToQueue('${t.uri}', this)">＋</button>
+        </div>
+      `).join('');
+    }
+
+    async function addToQueue(uri, btn) {
+      btn.disabled = true;
+      btn.textContent = '✓';
+      await fetch('/queue', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ uri })
+      });
+      const toast = document.getElementById('toast');
+      toast.style.display = 'block';
+      setTimeout(() => toast.style.display = 'none', 2500);
+    }
+  </script>
+</body>
+</html>
